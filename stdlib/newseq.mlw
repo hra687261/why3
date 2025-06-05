@@ -1,0 +1,78 @@
+
+
+module Seq
+  use int.Int
+  use smtseq.SMTSeq
+
+  type seq 'a = smtseq 'a
+
+  let function length (s: seq 'a) : int =
+    len s
+
+  let function get (s: seq 'a) (i: int) : 'a =
+    nth s i
+
+  let function ([]) (s: seq 'a) (i: int) : 'a =
+    get s i
+
+  (* is this necessary? *)
+  val predicate (==) (s1 s2: seq 'a)
+    ensures { result <-> length s1 = length s2 &&
+              forall i: int. 0 <= i < length s1 -> s1[i] = s2[i] }
+    ensures { result -> s1 = s2 }
+
+  meta "extensionality" predicate (==)
+  (*  *)
+
+  (* let rec create_aux (acc: seq 'a) (n: int) (f: int -> 'a): seq 'a
+    requires {n >= 0}
+    variant {n}
+  =
+    if n < 0 then acc else
+      create_aux (concat (unit_ (f n)) acc) (n - 1) f
+
+  let function create (len: int) (f: int -> 'a) : seq 'a =
+    if len <= 0 then empty () else
+      create_aux (unit_ (f (len - 1))) (len - 2) f *)
+
+  let function create = create
+
+  let constant empty = empty ()
+
+  let function set (s:seq 'a) (i:int) (v:'a) : seq 'a =
+    update s i (unit_ v)
+
+  let function ([<-]) (s: seq 'a) (i: int) (v: 'a) : seq 'a
+   = set s i v
+
+  let function singleton (v:'a) : seq 'a =
+    unit_ v
+
+  let function cons (x:'a) (s:seq 'a) : seq 'a =
+    concat (unit_ x) s
+
+  let function snoc (s:seq 'a) (x:'a) : seq 'a =
+  concat s (unit_ x)
+
+  (* copy pasted from stdlib *)
+  let function ([..]) (s:seq 'a) (i:int) (j:int) : seq 'a
+    requires { 0 <= i <= j <= length s }
+    ensures { length result = j - i }
+    ensures { forall k. 0 <= k < j - i -> result[k] = s[i + k] }
+  =
+    (* while false do variant { 0 } () done; *)
+    create (j-i) (fun k -> s[i+k])
+
+  let function ([_..]) (s: seq 'a) (i: int) : seq 'a
+    requires { 0 <= i <= length s }
+  = s[i .. length s]
+
+  let function ([.._]) (s: seq 'a) (j: int) : seq 'a
+    requires { 0 <= j <= length s }
+  = s[0 .. j]
+  (*  *)
+
+  let function (++) (s1:seq 'a) (s2:seq 'a) : seq 'a =
+    concat s1 s2
+
+end

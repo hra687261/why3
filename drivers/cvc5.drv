@@ -94,3 +94,16 @@ theory int.ComputerDivision
   remove prop Div_1
 end
 *)
+
+theory smtseq.SMTSeq
+  syntax type smtseq "(Seq %1)"
+  syntax function nth "(seq.nth %1 %2)"
+  syntax function len "(seq.len %1)"
+  syntax function empty "seq.empty"
+  syntax function unit_ "(seq.unit %1)"
+  syntax function concat "(seq.++ %1 %2)"
+  syntax function extract "(seq.extract %1 %2 %3)"
+  syntax function update "(seq.update %1 %2 %3)"
+
+  remove allprops
+end

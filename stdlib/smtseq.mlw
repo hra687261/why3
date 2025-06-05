@@ -1,0 +1,126 @@
+module SMTSeq
+  use int.Int
+
+  type smtseq 'a
+
+  function nth (smtseq 'a) int: 'a
+
+  function len (smtseq 'a): int
+  axiom seq_len: forall s: smtseq 'a. (s.len >= 0)
+
+  axiom seq_equality:
+    forall s1 s2: smtseq 'a. (
+       s1.len = s2.len /\
+      forall i: int. 0 <= i < s1.len -> nth s1 i = nth s2 i
+    ) -> s1 = s2
+
+  function empty (): smtseq 'a
+  axiom seq_empty:
+    forall s: smtseq 'a. (s = empty () -> s.len = 0)
+    (* len (empty ()) = 0 *)
+
+  function unit_ 'a: smtseq 'a
+  axiom seq_unit:
+    forall v: 'a. (
+      (len (unit_ v) = 1) /\ (nth (unit_ v) 0 = v)
+    )
+
+  function concat (smtseq 'a) (smtseq 'a): smtseq 'a
+  axiom seq_concat:
+    forall s1 s2: smtseq 'a.
+      let res = concat s1 s2 in
+      len res = s1.len + s2.len /\
+      forall k:int. (
+        (0 <= k < s1.len -> nth res k = nth s1 k) /\
+        (s1.len <= k < s1.len + s2.len -> nth res k = nth s2 (k - s1.len))
+      )
+
+  function extract (smtseq 'a) int int: smtseq 'a
+  axiom seq_extract:
+    forall s: smtseq 'a, i l: int.
+    let res = extract s i l in
+    if l <= 0 \/ i < 0 \/ i >= s.len then res = empty ()  else (
+      len res = l /\
+      forall k: int.
+        (i <= k < i + l -> nth res (k - i) = nth s k)
+    )
+
+  function update (smtseq 'a) int (smtseq 'a): smtseq 'a
+  axiom seq_update:
+    forall s1, s2: smtseq 'a, i: int.
+      let res = update s1 i s2 in
+      if s2.len = 0 \/ i < 0 \/ i >= s1.len then res = empty () else
+        len res = s1.len /\
+        forall k: int. (
+          0 <= k < s1.len ->
+            if (i <= k < i + s2.len)
+            then nth res k = nth s2 (k - i)
+            else nth res k = nth s1 k
+        )
+
+  val (=) (s1 s2: smtseq 'a): bool
+    ensures { result <-> s1 = s2}
+
+  val nth (s: smtseq 'a) (i: int): 'a
+    ensures { result = nth s i }
+
+  val len (s: smtseq 'a): int
+    ensures { result = len s }
+
+  val empty (): smtseq 'a
+    ensures { result = empty () }
+
+  val unit_ (v: 'a): smtseq 'a
+    ensures { result = unit_ v }
+
+  val concat (s1: smtseq 'a) (s2: smtseq 'a): smtseq 'a
+    ensures { result = concat s1 s2 }
+
+  val extract (s: smtseq 'a) (i: int) (l: int): smtseq 'a
+    ensures { result = extract s i l }
+
+  val update (s1: smtseq 'a) (i: int) (s2: smtseq 'a): smtseq 'a
+    ensures { result = update s1 i s2 }
+
+  (* Additional helper functions *)
+  let rec function create_aux
+    (acc: smtseq 'a) (n: int) (len: int) (f: int -> 'a): smtseq 'a
+    requires {len > n >= 0}
+    variant {len - n}
+    ensures { forall i: int. 0 <= i < len - n -> nth result i = f i }
+  =
+    if n >= len then acc else
+      create_aux (concat (unit_ (f (len - n - 1))) acc) (n + 1) len f
+
+  (* is the spec necessary? *)
+  let function create (l: int) (f: int -> 'a) : smtseq 'a
+    requires {l >= 0}
+    ensures { len result = l }
+    ensures { l = 0 -> result = empty ()}
+    ensures {
+      l > 0 ->
+      forall i: int. 0 <= i < l -> nth result i = f i
+    }
+  =
+    if l <= 0 then empty () else
+      create_aux (unit_ (f (l - 1))) 0 (l - 2) f
+
+  let function set (s: smtseq 'a) (i: int) (v: 'a): smtseq 'a =
+    update s i (unit_ v)
+
+end
+
+(*
+theory smtseq.SMTSeq
+  syntax type smtseq "(Seq %1)"
+  syntax function nth "(seq.nth %1 %2)"
+  syntax function len "(seq.len %1)"
+  syntax function empty "seq.empty"
+  syntax function unit_ "(seq.unit %1)"
+  syntax function concat "(seq.++ %1 %2)"
+  syntax function extract "(seq.extract %1 %2 %3)"
+  syntax function update "(seq.update %1 %2 %3)"
+
+  remove allprops
+end *)
+(* TODO: make sure that seq.update is defined when using z3 *)

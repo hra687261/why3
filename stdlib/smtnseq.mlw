@@ -1,0 +1,153 @@
+module NSeq
+  use int.Int
+
+  type smtnseq 'a
+
+  function first (smtnseq 'a): int
+  function last (smtnseq 'a): int
+  function get (smtnseq 'a) int: 'a
+  function const int int 'a: smtnseq 'a
+
+  axiom nseq_const: forall f l: int, v: 'a.
+    let s = const f l v in
+    s.first = f /\ s.last = l /\
+    (forall i: int. (f <= i <= l -> get s i = v))
+
+  axiom nseq_equality:
+    forall s1 s2: smtnseq 'a. (
+       s2.first = s1.first /\ s2.last = s1.last /\
+      forall i: int. s1.first <= i <= s1.last -> get s1 i = get s2 i
+    ) -> s1 = s2
+
+  function length (s: smtnseq 'a): int =
+    if s.last < s.first then 0 else s.last - s.first + 1
+
+  function content (s: smtnseq 'a): int -> 'a =
+    get s
+
+  function set (smtnseq 'a) int 'a: smtnseq 'a
+
+  axiom nseq_set:
+    forall s: smtnseq 'a, k: int, v: 'a.
+      let res = set s k v in
+      res.first = s.first /\ res.last = s.last /\
+      forall i: int.
+        s.first <= i <= s.last -> (
+          (i = k -> get res i = v) /\
+          (i <> k -> get res i = get s i)
+        )
+
+  function empty int int: smtnseq 'a
+
+  axiom nseq_empty:
+    forall f l: int.
+      let s: smtnseq 'a = empty f l in
+      s.first = f /\ s.last = l
+
+  function concat (smtnseq 'a) (smtnseq 'a): smtnseq 'a
+
+  axiom nseq_concat:
+    forall s1 s2: smtnseq 'a.
+      let res = concat s1 s2 in
+      if length s1 = 0 then res = s2 else
+      if s2.first <> s1.last + 1 then res = s1 else
+      res.first = s1.first /\ last res = s2.last /\
+      forall k:int. (
+        (s1.first <= k <= s1.last -> get res k = get s1 k) /\
+        (s2.first <= k <= s2.last -> get res k = get s2 k)
+      )
+
+  function relocate (smtnseq 'a) int: smtnseq 'a
+
+  axiom nseq_relocate:
+    forall s: smtnseq 'a, i: int.
+      let res = relocate s i in
+      res.first = i /\ res.last  = i + s.last - s.first /\
+      forall k:int. res.first <= k <= res.last -> get res k = get s (k - res.first + s.first)
+
+  function slice (smtnseq 'a) int int: smtnseq 'a
+
+  axiom nseq_slice:
+    forall s: smtnseq 'a, f l: int.
+      let res = slice s f l in
+      if s.last >= s.first /\ f >= s.first /\ l <= s.last
+      then
+        res.first = f /\ res.last = l /\
+        (l >= f ->
+          forall k:int. f <= k <= l -> get res k = get s k)
+      else res = s
+
+  function update (smtnseq 'a) (smtnseq 'a): smtnseq 'a
+
+  axiom nseq_update:
+    forall s1 s2: smtnseq 'a.
+      let res = update s1 s2 in
+      if
+        length s1 <> 0 /\ length s2 <> 0 /\
+        s1.first <= s2.first /\ s2.last <= s1.last
+      then
+        (forall k:int. (
+          s1.first <= k <= s1.last -> (
+            (s2.first <= k <= s2.last -> get res k = get s2 k) /\
+            ((k < s2.first \/ k > s2.last) -> get res k = get s1 k))
+        ))
+      else res = s1
+
+  val (=) (s1 s2: smtnseq 'a): bool
+    ensures { result <-> s1 = s2 }
+
+  val get (s: smtnseq 'a) (k: int): 'a
+    ensures { result = get s k }
+
+  val set (s: smtnseq 'a) (k: int) (v: 'a): smtnseq 'a
+    ensures { result = set s k v }
+
+  val first (s: smtnseq 'a): int
+    ensures { result = first s }
+
+  val last (s: smtnseq 'a): int
+    ensures { result = last s }
+
+  val content (s: smtnseq 'a): int -> 'a
+    ensures { result = content s }
+
+  val length (s: smtnseq 'a): int
+    ensures { result = length s }
+
+  val const (f l: int) (v: 'a): smtnseq 'a
+    ensures { result = const f l v }
+
+  val empty (f l: int): smtnseq 'a
+    ensures { result = empty f l }
+
+  val concat (s1 s2: smtnseq 'a): smtnseq 'a
+    ensures { result = concat s1 s2 }
+
+  val relocate (s: smtnseq 'a) (i: int): smtnseq 'a
+    ensures { result = relocate s i }
+
+  val slice (s: smtnseq 'a) (f l: int): smtnseq 'a
+    ensures { result = slice s f l }
+
+  val update (s1: smtnseq 'a) (s2: smtnseq 'a): smtnseq 'a
+    ensures { result = update s1 s2 }
+
+end
+
+(* theory smtnseq.NSeq
+  syntax type smtnseq "(NSeq %1)"
+  syntax function get "(nseq.get %1 %2)"
+  syntax function set "(nseq.set %1 %2 %3)"
+  syntax function first "(nseq.first %1)"
+  syntax function last "(nseq.last %1)"
+  syntax function content "(nseq.content %1)"
+  syntax function length "(nseq.length %1)"
+  syntax function const "(nseq.const %1 %2 %3)"
+  syntax function empty "(nseq.empty %1 %2)"
+  syntax function concat "(nseq.concat %1 %2)"
+  syntax function relocate "(nseq.relocate %1 %2)"
+  syntax function slice "(nseq.slice %1 %2 %3)"
+  syntax function update "(nseq.update %1 %2)"
+
+  remove allprops
+end *)
