@@ -185,3 +185,15 @@ end
 theory bool.Ite
   syntax function ite "(ite %1 %2 %3)"
 end
+
+theory HighOrd
+  syntax type     (->) "(Array %1 %2)"
+  syntax function (@)  "(select %1 %2)"
+end
+
+theory map.Map
+  syntax function get "(select %1 %2)"
+  syntax function set "(store %1 %2 %3)"
+end
+
+import "smt-libv2-floats.gen"
