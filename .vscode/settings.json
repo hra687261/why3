@@ -1,0 +1,7 @@
+{
+  "smt-lsp.preludes": [
+    "./misc/seq_prelude.psmt2",
+    "./misc/nseq_prelude.psmt2"
+  ],
+  "smt-lsp.binary": "~/.opam/main/bin/dolmenls",
+}
