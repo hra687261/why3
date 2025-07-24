@@ -24,26 +24,15 @@ module Seq
   meta "extensionality" predicate (==)
   (*  *)
 
-  (* let rec create_aux (acc: seq 'a) (n: int) (f: int -> 'a): seq 'a
-    requires {n >= 0}
-    variant {n}
-  =
-    if n < 0 then acc else
-      create_aux (concat (unit_ (f n)) acc) (n - 1) f
-
-  let function create (len: int) (f: int -> 'a) : seq 'a =
-    if len <= 0 then empty () else
-      create_aux (unit_ (f (len - 1))) (len - 2) f *)
-
   let function create = create
 
   let constant empty = empty ()
 
   let function set (s:seq 'a) (i:int) (v:'a) : seq 'a =
-    update s i (unit_ v)
+    set s i v
 
-  let function ([<-]) (s: seq 'a) (i: int) (v: 'a) : seq 'a
-   = set s i v
+  let function ([<-]) (s: seq 'a) (i: int) (v: 'a) : seq 'a =
+    set s i v
 
   let function singleton (v:'a) : seq 'a =
     unit_ v
@@ -52,7 +41,7 @@ module Seq
     concat (unit_ x) s
 
   let function snoc (s:seq 'a) (x:'a) : seq 'a =
-  concat s (unit_ x)
+    concat s (unit_ x)
 
   (* copy pasted from stdlib *)
   let function ([..]) (s:seq 'a) (i:int) (j:int) : seq 'a
