@@ -156,3 +156,18 @@ theory string.RegExpr
   syntax function loop       "(re.loop %3 %1 %2)"
 
 end
+
+theory smtseq.SMTSeq
+  prelude "(define-fun def.seq.update ((s (Seq Element)) (i Int) (t (Seq Element))) (Seq Element) (ite (or (< i 0) (>= i (seq.len s))) s (seq.++ (seq.extract s 0 i) t (seq.extract s (+ i 1) (- (seq.len s) (+ i 1))))))"
+
+  syntax type smtseq "(Seq %1)"
+  syntax function nth "(seq.nth %1 %2)"
+  syntax function len "(seq.len %1)"
+  syntax function empty "seq.empty"
+  syntax function unit_ "(seq.unit %1)"
+  syntax function concat "(seq.++ %1 %2)"
+  syntax function extract "(seq.extract %1 %2 %3)"
+  syntax function update "(def.seq.update %1 %2 %3)"
+
+  remove allprops
+end
